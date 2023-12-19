@@ -1,6 +1,6 @@
 import pygame
 import random
-
+#fyfyjfyj
 pygame.init()
 
 clock = pygame.time.Clock()
