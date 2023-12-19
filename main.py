@@ -15,9 +15,11 @@ score = 0
 font_score = pygame.font.Font('font/Minecraft Rus NEW.otf', 60)  # тип и размер шрифта
 background = pygame.image.load('images/bg.png').convert()
 ground = pygame.image.load("images/ground.png").convert_alpha()
-font_res = pygame.font.Font("font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
+font_res = pygame.font.Font(f"font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
 
-
+def change_background(text=""):
+    global background
+    background=pygame.image.load(f'images/bg{text}.png').convert()
 def made_icon(width, height, x, y):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + width), screen.get_height() / 3 - (20 + height), 200 + x,
@@ -215,6 +217,18 @@ while running:
         bird_group.empty()
         start_but = made_button(0, 130, 'START')
         skin_but = made_button(0, 0, 'SKIN')
+        theme_but = made_button(0, -130, 'THEME')
+        theme_right = made_icon(-230, -150,-130,-150 )
+        theme_right_text = font_res.render(">", True, (255, 255, 255))
+        theme_text_rect = theme_right_text.get_rect(center=theme_right.center)  # Выровнять текст по центру кнопки
+        screen.blit(theme_right_text, theme_text_rect)
+
+        theme_left = made_icon(100, -150,-130,-150)
+        theme_left_text = font_res.render("<", True, (255, 255, 255))
+        theme_text_rect = theme_left_text.get_rect(center=theme_left.center)  # Выровнять текст по центру кнопки
+        screen.blit(theme_left_text, theme_text_rect)
+
+
 
         if clicked and start_but.collidepoint(clicedpos):
             score = 0
@@ -255,6 +269,8 @@ while running:
                         sk = 0
             clicked = False
             pygame.display.update()
+       # if clicked and theme_but.collidepoint(clicedpos):
+
 
     if game_over:
         flappy = Bird(-150, 309, skin_type)
