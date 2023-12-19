@@ -13,13 +13,23 @@ icon = pygame.image.load('images/bird1.png').convert_alpha()  # иконка и�
 pygame.display.set_icon(icon)
 score = 0
 font_score = pygame.font.Font('font/Minecraft Rus NEW.otf', 60)  # тип и размер шрифта
-background = pygame.image.load('images/bg.png').convert()
+background = pygame.image.load('images/bg1.png').convert()
 ground = pygame.image.load("images/ground.png").convert_alpha()
 font_res = pygame.font.Font(f"font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
+theme_count=1
+f = open('money/money.txt', 'r')
+money_score= int(f.readline())
+f.close()
 
-def change_background(text=""):
+def change_background(operation):
+    global theme_count
     global background
-    background=pygame.image.load(f'images/bg{text}.png').convert()
+    theme_count+=operation
+    if theme_count>2:
+        theme_count=2
+    if  theme_count<1:
+        theme_count=1
+    background=pygame.image.load(f'images/bg{theme_count}.png').convert()
 def made_icon(width, height, x, y):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + width), screen.get_height() / 3 - (20 + height), 200 + x,
@@ -93,8 +103,7 @@ class Bird(pygame.sprite.Sprite):
             # создание прыжка по нажатию мыши или пробела
             if (pygame.mouse.get_pressed()[0] == 1 or pygame.key.get_pressed()[
                 pygame.K_SPACE] == 1) and self.clicked == False:  # если нажата правая кнопка мыши или пробел
-                self.clicked = True
-                self.vel = -10
+                self.jump()
             if pygame.mouse.get_pressed()[0] == 0 and pygame.key.get_pressed()[
                 pygame.K_SPACE] == 0:  # если правая кнопка мыши разжата
                 self.clicked = False
@@ -114,6 +123,32 @@ class Bird(pygame.sprite.Sprite):
         else:  # если игра окончена
             self.image = pygame.transform.rotate(self.images[self.bird_anim_count], -90)
 
+# создаем класс с монетками
+class Money(pygame.sprite.Sprite):
+    def __init__(self, x, y):  # создание картинки
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []  # создаем массив картинок для анимации
+        self.counter = 0  # подсчет времени иттерации
+        self.money_anim_count = 0  # контроль номера картинки
+        for num in range(1, 7):  # цикл, заполняющий массив картинками
+            img = pygame.image.load(f'images/money{num}.png').convert_alpha()
+            self.images.append(img)
+        self.image = self.images[self.money_anim_count]  # картинка, котторую будем выводить
+        self.rect = self.image.get_rect()  # выводим картинку
+        self.rect.center = [x, y]  # местоположение выводимой картинки
+
+    def update(self):
+        self.counter += 1
+        flap_cooldown = 5  # контроль времени переключения картинок
+        if self.counter > flap_cooldown:
+            self.counter = 0
+            self.money_anim_count += 1
+            if self.money_anim_count == 6:  # если предыдущая картинка была третьей, то начинаем сначала
+                self.money_anim_count = 0
+        self.image = self.images[self.money_anim_count]
+        self.rect.x -= scroll_speed
+        if self.rect.right < 0:
+            self.kill()
 
 # создаем класс препятствий
 class Pipe(pygame.sprite.Sprite):
@@ -129,6 +164,7 @@ class Pipe(pygame.sprite.Sprite):
             self.rect.topleft = [x, y + int(pipe_gap / 2)]  # координаты сверху
 
     def update(self):
+
         self.rect.x -= scroll_speed
         if self.rect.right < 0:  # обнуляем номер препятствия, когда пролетаем, чтобы потом использовать при счете очков
             self.kill()
@@ -138,6 +174,9 @@ class Pipe(pygame.sprite.Sprite):
 
 bird_group = pygame.sprite.Group()
 pipe_group = pygame.sprite.Group()
+money_group = pygame.sprite.Group()
+
+
 
 flappy = Bird(150, 309, 'bird')
 bird_group.add(flappy)
@@ -152,7 +191,8 @@ while running:
 
     bird_group.draw(screen)  # вывод птички
     bird_group.update()  # обновляем картинку
-
+    money_group.draw(screen)
+    money_group.update()
     pipe_group.draw(screen)  # вывод трубы
 
     screen.blit(ground, (ground_scroll, 683))  # вывод земли
@@ -169,17 +209,7 @@ while running:
             running = False
 
         if event.type == pygame.KEYDOWN:  # Проверка нажатия клавиш
-            if event.key == pygame.K_SPACE:  # Если нажат пробел
-                if game_over:
-                    # Сброс игровых переменных и перезапуск игры
-                    score = 0
-                    game_over = False
-                    bird_group.empty()
-                    pipe_group.empty()
-                    flappy = Bird(150, 309, skin_type)
-                    bird_group.add(flappy)
-                    flying = True
-                else:
+            if event.key == pygame.K_SPACE :  # Если нажат пробе
                     # Здесь код для прыжка птицы, если игра не окончена
                     flappy.jump()
 
@@ -188,6 +218,9 @@ while running:
     # если птица ударяется об стенку или потолок, игра окончена
     if pygame.sprite.groupcollide(bird_group, pipe_group, False, False) or flappy.rect.top < 0:
         game_over = True
+        money_group.empty()
+        money_group.update()
+
     # если птица ударяется о землю, игра окончена
     if flappy.rect.bottom >= 683:
         game_over = True
@@ -201,9 +234,13 @@ while running:
             pipe_hieght = random.randint(-150, 150)  # рандомное изменение высоты трубы
             top_pipe = Pipe(829, 309 + pipe_hieght, 1)  # ввод верхней трубы
             bottom_pipe = Pipe(829, 309 + pipe_hieght, 2)  # ввод нижней трубы
+
             pipe_group.add(bottom_pipe)
             pipe_group.add(top_pipe)
             last_pipe = time_now
+            if int(score)%5==0 and  not money_group and score>0:
+                gold=Money(829,pipe_hieght+300)
+                money_group.add(gold)
 
         ground_scroll -= scroll_speed  # создание движения земли
         if ground_scroll < -35:  # взяли картинку с запасом, чтобы она оюновлялась незаметно
@@ -212,9 +249,15 @@ while running:
 
 
 
+    if pygame.sprite.groupcollide(bird_group, money_group, False, False):
+        money_score+=1
+        money_group.empty()
+
+
     if game_over == False and flying == False:
         pipe_group.empty()
         bird_group.empty()
+        money_group.empty()
         start_but = made_button(0, 130, 'START')
         skin_but = made_button(0, 0, 'SKIN')
         theme_but = made_button(0, -130, 'THEME')
@@ -228,7 +271,15 @@ while running:
         theme_text_rect = theme_left_text.get_rect(center=theme_left.center)  # Выровнять текст по центру кнопки
         screen.blit(theme_left_text, theme_text_rect)
 
+        gold_icon = made_icon(-330, 230, -50, -120)
+        gold_text = font_res.render(f"$:{money_score}", True, (255, 255, 255))
+        gold_text_rect = gold_text.get_rect(center=gold_icon.center)  # Выровнять текст по центру кнопки
+        screen.blit(gold_text, gold_text_rect)
 
+        if clicked and theme_right.collidepoint(clicedpos):
+            change_background(1)
+        if clicked and theme_left.collidepoint(clicedpos):
+            change_background(-1)
 
         if clicked and start_but.collidepoint(clicedpos):
             score = 0
@@ -285,6 +336,7 @@ while running:
             # Перезапуск игры (например, создание новой птицы и очистка группы труб)
             bird_group.empty()
             pipe_group.empty()
+            money_group.empty()
             flappy = Bird(150, 309, skin_type)
 
             clicked = False
@@ -297,11 +349,14 @@ while running:
             # Перезапуск игры (например, создание новой птицы и очистка группы труб)
             bird_group.empty()
             pipe_group.empty()
+            money_group.empty()
             flappy = Bird(150, 309, skin_type)
             bird_group.add(flappy)
             flying = True
             clicked = False
     clicked = False
     pygame.display.update()
-
+f=open('money/money.txt','w')
+f.write(str(money_score))
+f.close()
 pygame.quit()
