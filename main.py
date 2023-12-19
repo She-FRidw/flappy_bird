@@ -1,6 +1,5 @@
 import pygame
 import random
-#fyfyjfyj
 pygame.init()
 
 clock = pygame.time.Clock()
@@ -11,13 +10,14 @@ white = (255, 255, 255)  # цвет очков
 pygame.display.set_caption('flappy bird')  # название игры
 icon = pygame.image.load('images/bird1.png').convert_alpha()  # иконка игры
 pygame.display.set_icon(icon)
+
 score = 0
 font_score = pygame.font.Font('font/Minecraft Rus NEW.otf', 60)  # тип и размер шрифта
 background = pygame.image.load('images/bg.png').convert()
 ground = pygame.image.load("images/ground.png").convert_alpha()
 font_res = pygame.font.Font("font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
 
-
+#создаем кнопку выбора птицы
 def made_icon(width, height, x, y):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + width), screen.get_height() / 3 - (20 + height), 200 + x,
@@ -31,7 +31,7 @@ def made_icon(width, height, x, y):
     pygame.draw.rect(screen, [255, 79, 0], but[0])
     return but[0]
 
-
+#создаем кнопки меню
 def made_button(x, y, text_but=''):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + x), screen.get_height() / 3 - (20 + y), 200,
@@ -57,7 +57,10 @@ game_over = False  # для завершения игры
 pipe_gap = 170  # для расстояния между верхней и нижней трубами
 pipe_frequency = 1500  # милисекунды
 last_pipe = pygame.time.get_ticks() - pipe_frequency  # время генерации последней трубы
-
+bg_sound = pygame.mixer.Sound('sounds/music.mp3')#музыка игры
+coins_sound = pygame.mixer.Sound('sounds/coins.mp3')#звук монет
+game_over_sound = pygame.mixer.Sound('sounds/game over.mp3')#звук конца игры
+game_over_sound_played = False
 
 # создаем класс игрока
 class Bird(pygame.sprite.Sprite):
@@ -108,7 +111,7 @@ class Bird(pygame.sprite.Sprite):
 
             # поворот птицы при прыжке и падении
             self.image = pygame.transform.rotate(self.images[self.bird_anim_count], self.vel * (
-                -2))  # умнижили на -, чтобы при падении смотрела вниз, а при прыжке вверх, и на 2, чтобы поворот был больше
+                -2))  #умножили на -, чтобы при падении смотрела вниз, а при прыжке вверх, и на 2, чтобы поворот был больше
         else:  # если игра окончена
             self.image = pygame.transform.rotate(self.images[self.bird_anim_count], -90)
 
@@ -225,6 +228,7 @@ while running:
             bird_group.add(flappy)
             flying = True
             clicked = False
+            bg_sound.play()
         if clicked and skin_but.collidepoint(clicedpos):
             pipe_group.empty()
             bird_group.empty()
@@ -256,11 +260,20 @@ while running:
             clicked = False
             pygame.display.update()
 
+    # звук окончания игры
+    if game_over and not game_over_sound_played:
+        game_over_sound.play()
+        game_over_sound_played = True
+
+    # рестарт
     if game_over:
         flappy = Bird(-150, 309, skin_type)
 
         restart_but = made_button(0, 130, 'RESTART')
         menu_but = made_button(0, 0, 'MENU')
+        bg_sound.stop()
+
+
         # Проверка нажатия на кнопку
         if clicked and menu_but.collidepoint(clicedpos):
             game_over = False
@@ -285,6 +298,8 @@ while running:
             bird_group.add(flappy)
             flying = True
             clicked = False
+            bg_sound.play()
+            game_over_sound_played = False
     clicked = False
     pygame.display.update()
 
