@@ -72,8 +72,11 @@ pipe_gap = 170  # для расстояния между верхней и ни�
 pipe_frequency = 1500  # милисекунды
 last_pipe = pygame.time.get_ticks() - pipe_frequency  # время генерации последней трубы
 bg_sound = pygame.mixer.Sound('sounds/music.mp3')#музыка игры
+bg_sound.set_volume(0.1)
 coins_sound = pygame.mixer.Sound('sounds/coins.mp3')#звук монет
+coins_sound.set_volume(1)
 game_over_sound = pygame.mixer.Sound('sounds/game over.mp3')#звук конца игры
+game_over_sound.set_volume(0.1)
 game_over_sound_played = False
 
 # создаем класс игрока
@@ -243,7 +246,8 @@ while running:
             pipe_group.add(bottom_pipe)
             pipe_group.add(top_pipe)
             last_pipe = time_now
-            if int(score)%5==0 and  not money_group and score>0:
+
+            if int(score)%5==0 and  not money_group:
                 gold=Money(829,pipe_hieght+300)
                 money_group.add(gold)
 
@@ -257,6 +261,7 @@ while running:
     if pygame.sprite.groupcollide(bird_group, money_group, False, False):
         money_score+=1
         money_group.empty()
+        coins_sound.play()
 
 
     if game_over == False and flying == False:
