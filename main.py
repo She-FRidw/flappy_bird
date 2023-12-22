@@ -5,6 +5,7 @@ pygame.init()
 
 clock = pygame.time.Clock()
 
+speed=60
 screen = pygame.display.set_mode((829, 818))
 font = pygame.font.SysFont('Bauhaus 93', 60)  # шрифт для очков
 white = (255, 255, 255)  # цвет очков
@@ -15,7 +16,7 @@ pygame.display.set_icon(icon)
 score = 0
 
 font_score = pygame.font.Font('font/Minecraft Rus NEW.otf', 60)  # тип и размер шрифта
-background = pygame.image.load('images/bg1.png').convert()
+
 ground = pygame.image.load("images/ground.png").convert_alpha()
 font_res = pygame.font.Font(f"font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
 theme_count = 1
@@ -34,6 +35,10 @@ f = open('memory/score.txt', 'r')
 max_score=f.readline()
 f.close()
 
+f = open('memory/theme.txt', 'r')
+theme_count=int(f.readline())
+f.close()
+background = pygame.image.load(f'images/bg{theme_count}.png').convert()
 # создаем кнопку выбора птицы
 def change_background(operation):
     global theme_count
@@ -200,6 +205,8 @@ class Pipe(pygame.sprite.Sprite):
             self.kill()
             global score
             score += 0.5
+            global speed
+            speed+=1
 
 
 bird_group = pygame.sprite.Group()
@@ -215,7 +222,7 @@ clicked = False
 
 while running:
 
-    clock.tick(60)
+    clock.tick(speed)
     screen.blit(background, (0, 0))  # вывод заднего фона
     bird_group.draw(screen)  # вывод птички
     bird_group.update()  # обновляем картинку
@@ -248,11 +255,13 @@ while running:
         game_over = True
         money_group.empty()
         money_group.update()
+        speed=60
 
     # если птица ударяется о землю, игра окончена
     if flappy.rect.bottom >= 683:
         game_over = True
         flying = False
+        speed=60
 
     if game_over == False and flying == True:  # если игра не окончена, продолжаем движение
 
@@ -387,7 +396,7 @@ while running:
                         if  cost_list[0][2] == 'y':
                             skin_type = 'fb'
                             sk = 0
-                        if money_score>=int(cost_list[0][1]):
+                        elif money_score>=int(cost_list[0][1]):
                             cost_list[0][2]='y'
                             money_score-=int(cost_list[0][1])
                             skin_type = 'fb'
@@ -400,7 +409,7 @@ while running:
                         if cost_list[1][2] == 'y':
                             skin_type = 'orangebird'
                             sk = 0
-                        if money_score>=int(cost_list[1][1]):
+                        elif money_score>=int(cost_list[1][1]):
                             cost_list[1][2]='y'
                             money_score-=int(cost_list[1][1])
                             skin_type = 'orangebird'
@@ -409,7 +418,7 @@ while running:
                         if cost_list [2][2]=='y':
                             skin_type = 'girl'
                             sk = 0
-                        if money_score>=int(cost_list[2][1]):
+                        elif money_score>=int(cost_list[2][1]):
                             cost_list[2][2]='y'
                             money_score-=int(cost_list[2][1])
                             skin_type = 'girl'
@@ -473,4 +482,8 @@ for i in cost_list:
 f.close()
 f=open('memory/score.txt','w')
 f.write(str(max_score))
+f.close()
+
+f=open('memory/theme.txt','w')
+f.write(str(theme_count))
 pygame.quit()
