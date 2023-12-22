@@ -314,7 +314,7 @@ while running:
                 pipe_group.add(bottom_pipe)
                 pipe_group.add(top_pipe)
                 last_pipe = time_now
-                if temp == 3 and not money_group:  # генерацция монетки
+                if temp == 5 and not money_group:  # генерацция монетки
                     gold = Money(829, pipe_hieght + 300)
                     money_group.add(gold)
         if int(score) > 0 and int(score) % 15 == 0 and flag == 0:  # провперка счета на вывод сложных труб
@@ -359,7 +359,7 @@ while running:
             change_background(-1)
 
         if clicked and start_but.collidepoint(clicedpos):  # запуск игры на кнопке старт
-            score = 1
+            score = 0
             # Перезапуск игры (например, создание новой птицы и очистка группы труб)
             bird_group.empty()
             pipe_group.empty()
