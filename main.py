@@ -13,26 +13,40 @@ icon = pygame.image.load('images/bird1.png').convert_alpha()  # иконка и�
 pygame.display.set_icon(icon)
 
 score = 0
+
 font_score = pygame.font.Font('font/Minecraft Rus NEW.otf', 60)  # тип и размер шрифта
 background = pygame.image.load('images/bg1.png').convert()
 ground = pygame.image.load("images/ground.png").convert_alpha()
 font_res = pygame.font.Font(f"font/Minecraft Rus NEW.otf", 35)  # тип и размер шрифта
-theme_count=1
-f = open('money/money.txt', 'r')
-money_score= int(f.readline())
+theme_count = 1
+f = open('memory/money.txt', 'r')
+money_score = int(f.readline())
 f.close()
 
-#создаем кнопку выбора птицы
+lock_img=pygame.image.load("images/lock.png").convert_alpha()
+font_cost=pygame.font.Font(f"font/Minecraft Rus NEW.otf", 10)
+f = open('memory/cost.txt', 'r')
+cost_list = [i.split() for i in f.readlines()]
+f.close()
+
+global max_score
+f = open('memory/score.txt', 'r')
+max_score=f.readline()
+f.close()
+
+# создаем кнопку выбора птицы
 def change_background(operation):
     global theme_count
     global background
-    theme_count+=operation
-    if theme_count>2:
-        theme_count=2
-    if  theme_count<1:
-        theme_count=1
-    background=pygame.image.load(f'images/bg{theme_count}.png').convert()
-def made_icon(width, height, x, y):
+    theme_count += operation
+    if theme_count > 15:
+        theme_count = 15
+    if theme_count < 1:
+        theme_count = 1
+    background = pygame.image.load(f'images/bg{theme_count}.png').convert()
+
+
+def made_icon(width, height, x, y,text='',font=10):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + width), screen.get_height() / 3 - (20 + height), 200 + x,
                          200 + y)  # X, Y, Ширина, Высота
@@ -43,9 +57,14 @@ def made_icon(width, height, x, y):
     pygame.draw.rect(screen, [65, 25, 0], but[2])  # Рисуем кнопку (коричневый)
     pygame.draw.rect(screen, [255, 255, 255], but[1])  # Рисуем кнопку (белый)
     pygame.draw.rect(screen, [255, 79, 0], but[0])
+    font_text=pygame.font.Font(f"font/Minecraft Rus NEW.otf", font)
+    icon_text = font_text.render(text, True, (255, 255, 255))
+    font_text_rect = icon_text.get_rect(center=but[0].center)  # Выровнять текст по центру кнопки
+    screen.blit(icon_text, font_text_rect)
     return but[0]
 
-#создаем кнопки меню
+
+# создаем кнопки меню
 def made_button(x, y, text_but=''):
     but = [0] * 3
     but[0] = pygame.Rect(screen.get_width() / 2 - (100 + x), screen.get_height() / 3 - (20 + y), 200,
@@ -71,13 +90,14 @@ game_over = False  # для завершения игры
 pipe_gap = 170  # для расстояния между верхней и нижней трубами
 pipe_frequency = 1500  # милисекунды
 last_pipe = pygame.time.get_ticks() - pipe_frequency  # время генерации последней трубы
-bg_sound = pygame.mixer.Sound('sounds/music.mp3')#музыка игры
+bg_sound = pygame.mixer.Sound('sounds/music.mp3')  # музыка игры
 bg_sound.set_volume(0.1)
-coins_sound = pygame.mixer.Sound('sounds/coins.mp3')#звук монет
+coins_sound = pygame.mixer.Sound('sounds/coins.mp3')  # звук монет
 coins_sound.set_volume(1)
-game_over_sound = pygame.mixer.Sound('sounds/game over.mp3')#звук конца игры
+game_over_sound = pygame.mixer.Sound('sounds/game over.mp3')  # звук конца игры
 game_over_sound.set_volume(0.1)
 game_over_sound_played = False
+
 
 # создаем класс игрока
 class Bird(pygame.sprite.Sprite):
@@ -127,9 +147,10 @@ class Bird(pygame.sprite.Sprite):
 
             # поворот птицы при прыжке и падении
             self.image = pygame.transform.rotate(self.images[self.bird_anim_count], self.vel * (
-                -2))  #умножили на -, чтобы при падении смотрела вниз, а при прыжке вверх, и на 2, чтобы поворот был больше
+                -2))  # умножили на -, чтобы при падении смотрела вниз, а при прыжке вверх, и на 2, чтобы поворот был больше
         else:  # если игра окончена
             self.image = pygame.transform.rotate(self.images[self.bird_anim_count], -90)
+
 
 # создаем класс с монетками
 class Money(pygame.sprite.Sprite):
@@ -158,6 +179,7 @@ class Money(pygame.sprite.Sprite):
         if self.rect.right < 0:
             self.kill()
 
+
 # создаем класс препятствий
 class Pipe(pygame.sprite.Sprite):
     def __init__(self, x, y, position):  # создание картинки
@@ -185,7 +207,6 @@ pipe_group = pygame.sprite.Group()
 money_group = pygame.sprite.Group()
 
 
-
 flappy = Bird(150, 309, 'bird')
 bird_group.add(flappy)
 skin_type = 'bird'
@@ -196,7 +217,6 @@ while running:
 
     clock.tick(60)
     screen.blit(background, (0, 0))  # вывод заднего фона
-
     bird_group.draw(screen)  # вывод птички
     bird_group.update()  # обновляем картинку
     money_group.draw(screen)
@@ -207,7 +227,9 @@ while running:
     score_text = font_score.render(f' {int(score)}', True, (255, 255, 255))  # Белый цвет
     screen.blit(score_text, (screen.get_width() / 2 - 30, 10))
 
-
+    if int(score)>int(max_score):
+        max_score=str(int(score))
+    made_icon(270,230,-80,-150,str("Record: "+max_score),18)
     for event in pygame.event.get():  # закрытие по нажатию кнопки, а не автоматически
         if event.type == pygame.MOUSEBUTTONDOWN:
             clicked = True
@@ -217,11 +239,9 @@ while running:
             running = False
 
         if event.type == pygame.KEYDOWN:  # Проверка нажатия клавиш
-            if event.key == pygame.K_SPACE :  # Если нажат пробе
-                    # Здесь код для прыжка птицы, если игра не окончена
-                    flappy.jump()
-
-
+            if event.key == pygame.K_SPACE:  # Если нажат пробе
+                # Здесь код для прыжка птицы, если игра не окончена
+                flappy.jump()
 
     # если птица ударяется об стенку или потолок, игра окончена
     if pygame.sprite.groupcollide(bird_group, pipe_group, False, False) or flappy.rect.top < 0:
@@ -247,22 +267,19 @@ while running:
             pipe_group.add(top_pipe)
             last_pipe = time_now
 
-            if int(score)%5==0 and  not money_group:
-                gold=Money(829,pipe_hieght+300)
+            if int(score) % 5 == 0 and not money_group:
+                gold = Money(829, pipe_hieght + 300)
                 money_group.add(gold)
 
         ground_scroll -= scroll_speed  # создание движения земли
-        if ground_scroll < -35:  # взяли картинку с запасом, чтобы она оюновлялась незаметно
+        if ground_scroll < -28:  # взяли картинку с запасом, чтобы она оюновлялась незаметно
             ground_scroll = 0
         pipe_group.update()  # обновляем картинку труб
 
-
-
     if pygame.sprite.groupcollide(bird_group, money_group, False, False):
-        money_score+=1
+        money_score += 1
         money_group.empty()
         coins_sound.play()
-
 
     if game_over == False and flying == False:
         pipe_group.empty()
@@ -271,12 +288,12 @@ while running:
         start_but = made_button(0, 130, 'START')
         skin_but = made_button(0, 0, 'SKIN')
         theme_but = made_button(0, -130, 'THEME')
-        theme_right = made_icon(-230, -150,-130,-150 )
+        theme_right = made_icon(-230, -150, -130, -150)
         theme_right_text = font_res.render(">", True, (255, 255, 255))
         theme_text_rect = theme_right_text.get_rect(center=theme_right.center)  # Выровнять текст по центру кнопки
         screen.blit(theme_right_text, theme_text_rect)
 
-        theme_left = made_icon(100, -150,-130,-150)
+        theme_left = made_icon(100, -150, -130, -150)
         theme_left_text = font_res.render("<", True, (255, 255, 255))
         theme_text_rect = theme_left_text.get_rect(center=theme_left.center)  # Выровнять текст по центру кнопки
         screen.blit(theme_left_text, theme_text_rect)
@@ -308,31 +325,99 @@ while running:
             screen.blit(ground, (ground_scroll, 683))
             skin_icon1 = made_icon(-120, 0, -50, -50)
             skin_icon2 = made_icon(120, 0, -50, -50)
+            skin_icon3 = made_icon(120, -200, -50, -50)
+            skin_icon4 = made_icon(-120, -200, -50, -50)
             skin_type1 = Bird(screen.get_width() / 2 - 145, screen.get_height() / 3 + 55, 'bird')
             skin_type2 = Bird(screen.get_width() / 2 + 100, screen.get_height() / 3 + 55, 'fb')
+            skin_type3 = Bird(screen.get_width() / 2 - 145, screen.get_height() / 3 + 255, 'orangebird')
+            skin_type4 = Bird(screen.get_width() / 2 + 100, screen.get_height() / 3 + 255, 'girl')
             bird_group.add(skin_type1)
             bird_group.add(skin_type2)
+            bird_group.add(skin_type3)
+            bird_group.add(skin_type4)
             bird_group.draw(screen)
+            gold_icon = made_icon(-330, 230, -50, -120)
+            gold_text = font_res.render(f"$:{money_score}", True, (255, 255, 255))
+            gold_text_rect = gold_text.get_rect(center=gold_icon.center)  # Выровнять текст по центру кнопки
+            screen.blit(gold_text, gold_text_rect)
             pygame.display.update()
+            def skin():
+                screen.blit(background, (0, 0))
+                screen.blit(ground, (ground_scroll, 683))
+                skin_icon1 = made_icon(-120, 0, -50, -50)
+                skin_icon2 = made_icon(120, 0, -50, -50)
+                skin_icon3 = made_icon(120, -200, -50, -50)
+                skin_icon4 = made_icon(-120, -200, -50, -50)
+                bird_group.draw(screen)
+                gold_icon = made_icon(-330, 230, -50, -120)
+                gold_text = font_res.render(f"$:{money_score}", True, (255, 255, 255))
+                gold_text_rect = gold_text.get_rect(center=gold_icon.center)  # Выровнять текст по центру кнопки
+                screen.blit(gold_text, gold_text_rect)
+                pygame.display.update()
             sk = 1
             clicked = False
             while (sk == 1):
+
                 for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        sk=0
 
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         clicked = True
                         clicedpos = event.pos
-
+                    if not skin_icon1.collidepoint(pygame.mouse.get_pos()) and not skin_icon4.collidepoint(pygame.mouse.get_pos()) and not skin_icon3.collidepoint(pygame.mouse.get_pos()):
+                        skin()
+                    if not clicked and skin_icon1.collidepoint(pygame.mouse.get_pos()) and cost_list[0][2] =='n':
+                        skin()
+                        made_icon(300-pygame.mouse.get_pos()[0],320-pygame.mouse.get_pos()[1],-100,-150,"cost:"+cost_list[0][1],20)
+                        pygame.display.update()
+                        clock.tick(30)
+                    if not clicked and skin_icon3.collidepoint(pygame.mouse.get_pos()) and cost_list[1][2] =='n':
+                        skin()
+                        made_icon(300-pygame.mouse.get_pos()[0],320-pygame.mouse.get_pos()[1],-100,-150,"cost:"+cost_list[1][1],20)
+                        pygame.display.update()
+                        clock.tick(30)
+                    if not clicked and skin_icon4.collidepoint(pygame.mouse.get_pos()) and cost_list[2][2] =='n':
+                        skin()
+                        made_icon(300-pygame.mouse.get_pos()[0],320-pygame.mouse.get_pos()[1],-100,-150,"cost:"+cost_list[2][1],20)
+                        pygame.display.update()
+                        clock.tick(30)
                     if clicked and skin_icon1.collidepoint(clicedpos):
-                        skin_type = 'fb'
-                        sk = 0
+                        if  cost_list[0][2] == 'y':
+                            skin_type = 'fb'
+                            sk = 0
+                        if money_score>=int(cost_list[0][1]):
+                            cost_list[0][2]='y'
+                            money_score-=int(cost_list[0][1])
+                            skin_type = 'fb'
+                            sk = 0
+
                     if clicked and skin_icon2.collidepoint(clicedpos):
                         skin_type = 'bird'
                         sk = 0
+                    if clicked and skin_icon3.collidepoint(clicedpos):
+                        if cost_list[1][2] == 'y':
+                            skin_type = 'orangebird'
+                            sk = 0
+                        if money_score>=int(cost_list[1][1]):
+                            cost_list[1][2]='y'
+                            money_score-=int(cost_list[1][1])
+                            skin_type = 'orangebird'
+                            sk = 0
+                    if clicked and skin_icon4.collidepoint(clicedpos):
+                        if cost_list [2][2]=='y':
+                            skin_type = 'girl'
+                            sk = 0
+                        if money_score>=int(cost_list[2][1]):
+                            cost_list[2][2]='y'
+                            money_score-=int(cost_list[2][1])
+                            skin_type = 'girl'
+                            sk = 0
+                    clicked=False
             clicked = False
             pygame.display.update()
-       # if clicked and theme_but.collidepoint(clicedpos):
-
+    # if clicked and theme_but.collidepoint(clicedpos):
 
     # звук окончания игры
     if game_over and not game_over_sound_played:
@@ -346,7 +431,6 @@ while running:
         restart_but = made_button(0, 130, 'RESTART')
         menu_but = made_button(0, 0, 'MENU')
         bg_sound.stop()
-
 
         # Проверка нажатия на кнопку
         if clicked and menu_but.collidepoint(clicedpos):
@@ -377,8 +461,16 @@ while running:
             bg_sound.play()
             game_over_sound_played = False
     clicked = False
+
     pygame.display.update()
-f=open('money/money.txt','w')
+f = open('memory/money.txt', 'w')
 f.write(str(money_score))
 f.close()
+f = open('memory/cost.txt', 'w')
+for i in cost_list:
+    f.write(str(i[0]+' '+i[1]+' '+i[2]+'\n'))
+
+f.close()
+f=open('memory/score.txt','w')
+f.write(str(max_score))
 pygame.quit()
