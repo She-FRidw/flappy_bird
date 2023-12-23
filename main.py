@@ -256,12 +256,14 @@ while running:
             if event.key == pygame.K_SPACE:  # Если нажат пробе
                 # Здесь код для прыжка птицы, если игра не окончена
                 flappy.jump()
-            if event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE and flying == True and game_over == False:
                 pause = True
+
                 while pause:
                     for event in pygame.event.get():
                         if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
                             pause = False
+                            pipe_group.empty()
                         if event.type == pygame.QUIT:
                             running = False
                             pause = False
@@ -521,9 +523,8 @@ while running:
 
         restart_but = made_button(0, 130, 'RESTART')  # создаем кнопки рестарта и меню
         menu_but = made_button(0, 0, 'MENU')
-        exit_but = made_button(0, -130, f'EXIT')
+        exit_but = made_button(0, -130, 'EXIT')
         bg_sound.stop()
-
         # Проверка нажатия на кнопку
         if clicked and exit_but.collidepoint(clicedpos):
             running = False
@@ -541,7 +542,7 @@ while running:
 
         if clicked and restart_but.collidepoint(clicedpos):  # перезапустить саму игру не выходя в главное меню
             # Сброс игровых переменных
-            del restart_but
+
             score = 0
             game_over = False
             # Перезапуск игры (например, создание новой птицы и очистка группы труб)
