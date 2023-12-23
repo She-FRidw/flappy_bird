@@ -103,6 +103,8 @@ coins_sound.set_volume(1)
 game_over_sound = pygame.mixer.Sound('sounds/game over.mp3')  # звук конца игры
 game_over_sound.set_volume(0.1)
 game_over_sound_played = False
+volume = ['PLAY', 'MUTE']
+print(volume)
 
 
 # создаем класс игрока
@@ -224,6 +226,7 @@ running = True
 clicked = False
 temp = 0  # количество сложных труб
 flag = 0  # флаг на сложные трубы
+sound_flag = 0
 while running:
 
     clock.tick(speed)  # фпс
@@ -253,6 +256,15 @@ while running:
             if event.key == pygame.K_SPACE:  # Если нажат пробе
                 # Здесь код для прыжка птицы, если игра не окончена
                 flappy.jump()
+            if event.key == pygame.K_ESCAPE:
+                pause = True
+                while pause:
+                    for event in pygame.event.get():
+                        if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
+                            pause = False
+                        if event.type == pygame.QUIT:
+                            running = False
+                            pause = False
 
     # если птица ударяется об стенку или потолок, игра окончена
     if pygame.sprite.groupcollide(bird_group, pipe_group, False, False) or flappy.rect.top < 0:
@@ -328,7 +340,8 @@ while running:
     if pygame.sprite.groupcollide(bird_group, money_group, False, False):  # проверка на то собрала ли птичка монетку
         money_score += 1
         money_group.empty()
-        coins_sound.play()
+        if sound_flag == 0:
+            coins_sound.play()
 
     if game_over == False and flying == False:
         pipe_group.empty()
@@ -338,6 +351,8 @@ while running:
         skin_but = made_button(0, 0, 'SKIN')
         theme_but = made_button(0, -130,
                                 'THEME')  # выводим кнопки старта, скина, меню и стрелочки для выбора темы(конпка темы ни к чему не привязана)
+        sound_but = made_button(0, -260, f'{volume[int(sound_flag)]}')
+        exit_but = made_button(0, -390, f'EXIT')
         theme_right = made_icon(-230, -150, -130, -150)
         theme_right_text = font_res.render(">", True, (255, 255, 255))
         theme_text_rect = theme_right_text.get_rect(center=theme_right.center)  # Выровнять текст по центру кнопки
@@ -367,7 +382,12 @@ while running:
             bird_group.add(flappy)
             flying = True
             clicked = False
-            bg_sound.play()
+            if sound_flag == 0:
+                bg_sound.play()
+        if clicked and exit_but.collidepoint(clicedpos):
+            running = False
+        if clicked and sound_but.collidepoint(clicedpos):
+            sound_flag = not sound_flag
         if clicked and skin_but.collidepoint(clicedpos):  # открытие меню выбора скина
             pipe_group.empty()
             bird_group.empty()
@@ -491,7 +511,7 @@ while running:
     # if clicked and theme_but.collidepoint(clicedpos):
 
     # звук окончания игры
-    if game_over and not game_over_sound_played:
+    if game_over and not game_over_sound_played and sound_flag == 0:
         game_over_sound.play()
         game_over_sound_played = True
 
@@ -501,9 +521,12 @@ while running:
 
         restart_but = made_button(0, 130, 'RESTART')  # создаем кнопки рестарта и меню
         menu_but = made_button(0, 0, 'MENU')
+        exit_but = made_button(0, -130, f'EXIT')
         bg_sound.stop()
 
         # Проверка нажатия на кнопку
+        if clicked and exit_but.collidepoint(clicedpos):
+            running = False
         if clicked and menu_but.collidepoint(clicedpos):  # выход в стартовое меню и обнуление игровых переменных
             game_over = False
             flying = False
@@ -529,8 +552,9 @@ while running:
             bird_group.add(flappy)
             flying = True
             clicked = False
-            bg_sound.play()
-            game_over_sound_played = False
+            if sound_flag == 0:
+                bg_sound.play()
+                game_over_sound_played = False
     clicked = False
 
     pygame.display.update()
